@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin Halving Countdown</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="container my-4">
+   
+        <div class="card-body text-center">
+            <h1 class="card-title display-4 fw-bold text-primary">
+                <img src="{{ url_for('static', filename='img/btc_img.png') }}"
+                     width="90" height="50"
+                     alt="Bitcoin Logo"
+                     class="bounce-image"
+                     loading="lazy">
+                Bitcoin Halving Countdown
+            </h1>
+            <p class="lead"><b>Block reward will decrease from {{ current_reward }} to {{ next_reward }} BTC in approximately</b></p>
+            <div class="countdown d-flex justify-content-center gap-3 mb-4">
+                <div class="countdown-item"><span id="days" class="display-5 fw-bold">0</span><small class="d-block">Days</small></div>
+                <div class="countdown-item"><span id="hours" class="display-5 fw-bold">0</span><small class="d-block">Hours</small></div>
+                <div class="countdown-item"><span id="minutes" class="display-5 fw-bold">0</span><small class="d-block">Minutes</small></div>
+                <div class="countdown-item"><span id="seconds" class="display-5 fw-bold">0</span><small class="d-block">Seconds</small></div>
+            </div>
+            <p class="lead">Bitcoin data provider: <a href="https://blockchair.com/bitcoin" target="_blank"><b>Blockchair</b></a></p>
+        </div>
+    
+
+    <div class="row mt-4">
+        {% set icons = ['fa-cube','fa-calendar-alt','fa-layer-group','fa-cubes'] %}
+        {% set titles = ['Current Block','Next Halving Date','Halving at Block','Blocks Left'] %}
+        {% set values = [current_block,next_halving_date,next_halving_block,blocks_left] %}
+        {% for i in range(4) %}
+        <div class="col-6 col-md-3 mb-3">
+            <div class="card shadow border-0 info-card">
+                <div class="card-body text-center">
+                    <i class="fas {{ icons[i] }} fa-2x text-primary mb-2"></i>
+                    <h5>{{ titles[i] }}</h5>
+                    <p class="fw-bold">{{ values[i] }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="card shadow-lg border-0 mb-4">
+        <div class="card-body text-center">
+            <h2 class="card-title h4 fw-bold mb-3">Share with Friends</h2>
+            <div class="share-buttons d-flex flex-wrap justify-content-center gap-3">
+                <a href="https://twitter.com/intent/tweet?text=Check out this Bitcoin Halving Tracker!&url=https://halving-tracker.harshit.com"
+                   class="btn btn-outline-dark d-flex align-items-center px-3 py-2"
+                   target="_blank"
+                   aria-label="Share on X">
+                    <i class="fab fa-x-twitter me-2"></i>
+                    Share on X
+                </a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u=https://halving-tracker.harshit.com"
+                   class="btn btn-outline-primary d-flex align-items-center px-3 py-2"
+                   target="_blank"
+                   aria-label="Share on Facebook">
+                    <i class="fab fa-facebook-f me-2"></i>
+                    Share on Facebook
+                </a>
+                <a href="https://api.whatsapp.com/send?text=Check%20out%20this%20Bitcoin%20Halving%20Tracker!%20https://halving-tracker.harshit.com"
+                   class="btn btn-outline-success d-flex align-items-center px-3 py-2"
+                   target="_blank"
+                   aria-label="Share on WhatsApp">
+                    <i class="fab fa-whatsapp me-2"></i>
+                    Share on WhatsApp
+                </a>
+                <a href="https://t.me/share/url?url=https://halving-tracker.harshit.com&text=Check out this Bitcoin Halving Tracker!"
+                   class="btn btn-outline-info d-flex align-items-center px-3 py-2"
+                   target="_blank"
+                   aria-label="Share on Telegram">
+                    <i class="fab fa-telegram-plane me-2"></i>
+                    Share on Telegram
+                </a>
+                <button class="btn btn-outline-secondary d-flex align-items-center px-3 py-2 copy-link-btn"
+                        aria-label="Copy link to clipboard"
+                        onclick="navigator.clipboard.writeText('https://halving-tracker.harshit.com').then(() => alert('Link copied to clipboard!'));">
+                    <i class="fas fa-link me-2"></i>
+                    Copy Link
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-lg border-0 mb-4">
+        <div class="card-body">
+            <h2 class="card-title h4 fw-bold">Bitcoin Reward Calculator</h2>
+            <div class="input-group mb-3">
+                <span class="input-group-text"><i class="fas fa-calculator"></i></span>
+                <input type="number" id="blockInput" class="form-control" placeholder="Enter Block Height" min="0">
+                <button class="btn btn-primary" onclick="calculateReward()"><i class="fas fa-search"></i> Calculate</button>
+            </div>
+            <div id="result" class="alert d-none"></div>
+        </div>
+    </div>
+
+    <div class="card shadow-lg border-0 mb-4">
+        <div class="card-body">
+            <h2 class="card-title h4 fw-bold">Historical BTC Price at Halvings</h2>
+            <div class="chart-container">
+                <canvas id="halvingChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-lg border-0">
+                <div class="card-body">
+                    <h2 class="card-title h4 fw-bold">Bitcoin Stats</h2>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">Current Bitcoin Price<span class="badge bg-primary rounded-pill">{{ current_price }}</span></li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">Market Cap<span class="badge bg-primary rounded-pill">{{ market_cap }}</span></li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">Average Block Time<span class="badge bg-primary rounded-pill">{{ avg_block_time }}</span></li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">Circulating Supply (BTC)<span class="badge bg-primary rounded-pill">{{ circulating_supply }}</span></li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">Max Supply (BTC)<span class="badge bg-primary rounded-pill">{{ max_supply }}</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-lg border-0">
+                <div class="card-body">
+                    <h2 class="card-title h4 fw-bold">What is Bitcoin Halving?</h2>
+                    <p>A Bitcoin halving reduces the mining reward every 210,000 blocks, controlling supply and ensuring scarcity. The next halving at block {{ next_halving_block }} will cut the reward to {{ next_reward }} BTC, expected around {{ next_halving_date }}.</p>
+                    <p>This mechanism caps Bitcoin at 21 million coins, influencing miner economics and potentially driving price changes due to reduced new supply.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-lg border-0 mb-4">
+        <div class="card-body">
+            <h2 class="card-title h4 fw-bold">Bitcoin Halving Dates</h2>
+            <div class="table-responsive">
+                <table class="table table-hover table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Halving Number</th>
+                            <th>Block Height</th>
+                            <th>Block Reward BTC</th>
+                            <th>BTC Price</th>
+                            <th>Halving Date/Year</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for halving in halvings %}
+                        <tr>
+                            <td>{{ halving.number }}{% if halving.number == 5 %} (Next Halving){% endif %}</td>
+                            <td>{{ halving.block }}</td>
+                            <td>{{ halving.reward }}</td>
+                            <td>{{ halving.price }}</td>
+                            <td>{{ halving.date }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let timeleft = {{ time_left_seconds }};
+    const countdownInterval = setInterval(() => {
+        if (timeleft <= 0) {
+            clearInterval(countdownInterval);
+            ['days','hours','minutes','seconds'].forEach(id => document.getElementById(id).innerHTML=0);
+            return;
+        }
+        const days = Math.floor(timeleft / 86400);
+        const hours = Math.floor((timeleft % 86400) / 3600);
+        const minutes = Math.floor((timeleft % 3600) / 60);
+        const seconds = timeleft % 60;
+        document.getElementById('days').innerHTML=days;
+        document.getElementById('hours').innerHTML=hours;
+        document.getElementById('minutes').innerHTML=minutes;
+        document.getElementById('seconds').innerHTML=seconds;
+        timeleft--;
+    },1000);
+
+    const ctx = document.getElementById('halvingChart').getContext('2d');
+    new Chart(ctx, {
+        type:'line',
+        data:{
+            labels: {{ halving_labels | tojson }},
+            datasets:[{
+                label:'BTC Price at Halving (USD)',
+                data: {{ prices | tojson }},
+                borderColor:'#FD7E14',
+                backgroundColor:'rgba(253,126,20,0.2)',
+                fill:true,
+                tension:0.4,
+                pointRadius:5,
+                pointHoverRadius:7,
+                pointBackgroundColor:'#FD7E14'
+            }]
+        },
+        options:{
+            responsive:true,
+            maintainAspectRatio:false,
+            scales:{
+                x:{ grid:{ color:'rgba(253,126,20,0.2)' }, title:{ display:true, text:'Halving Number', color:'#FD7E14' }},
+                y:{ grid:{ color:'rgba(253,126,20,0.2)' }, title:{ display:true, text:'Price (USD)', color:'#FD7E14' }, ticks:{ callback:value=> '$'+value.toLocaleString() } }
+            },
+            plugins:{
+                legend:{ labels:{ color:'#FD7E14' }},
+                title:{ display:true, text:'Historical BTC Price at Halvings', color:'#FD7E14', font:{ size:18, weight:'bold' } },
+                tooltip:{ backgroundColor:'#0a0a20', borderColor:'#FD7E14', borderWidth:1, titleColor:'#FD7E14', bodyColor:'#fff' }
+            }
+        }
+    });
+
+    function calculateReward(){
+        const block=parseInt(document.getElementById('blockInput').value);
+        const resultDiv=document.getElementById('result');
+        resultDiv.classList.remove('d-none');
+        if(isNaN(block)||block<0){
+            resultDiv.classList.add('alert-danger'); resultDiv.classList.remove('alert-info');
+            resultDiv.innerHTML='Please enter a valid block height.';
+            return;
+        }
+        const halvingNum=Math.floor(block/210000);
+        let reward=50/Math.pow(2,halvingNum);
+        reward=halvingNum>=33?0:reward.toFixed(8);
+        resultDiv.classList.add('alert-info'); resultDiv.classList.remove('alert-danger');
+        resultDiv.innerHTML=`Block ${block}: ${reward} BTC (After ${halvingNum} halvings)`;
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
